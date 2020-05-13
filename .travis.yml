@@ -2,6 +2,5 @@ language: go
 dist: trusty
 sudo: false
 go:
-  - "1.12.x"
   - "1.13.x"
   - master
