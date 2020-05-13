@@ -36,7 +36,7 @@ mat.AppendRow("Jen", []bool{true, true, true}) // Jen can bring everything
 
 ``` 
 
-In this simple example, we have to solutions: either Jen brings everything or Amanda and Chris can bring their stuff individually. Let's see what DLX thinks about it:
+In this simple example, we have two solutions: either Jen brings everything or Amanda and Chris can bring their stuff individually. Let's see what DLX thinks about it:
 
 ```go
 
@@ -49,6 +49,27 @@ Awesome! The result is a two dimensional slice of row names, because there can b
 
 ## Sudoku Solver
 
+Sudokus can also be solved pretty fast from a string by using the Euler96 format:
+
+```go
+
+board := NewSudokuBoard(9)
+board.ReadEulerTextFormat(`Grid 01
+    003020600
+    900305001
+    001806400
+    008102900
+    700000008
+    006708200
+    002609500
+    800203009
+    005010300`)
+err := board.solve() // solve with DLX
+err := board.VerifyCorrectness() // check if the solution is correct
+err := board.Print(os.Stdout) // print it to stdout
+```
+
+Keep in mind that this only picks the first solution (if there are many), and returns an error when there is no solution available.
 
 ## N-Queens Solver
 

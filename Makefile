@@ -22,7 +22,7 @@ release:
 
 .PHONY: bench
 bench:
-	$(GO) test -v -benchmem -bench=. ./benchmark
+	$(GO) test -v -benchmem -bench=. ./sudoku
 
 .PHONY: unit-test
 unit-test:
