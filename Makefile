@@ -2,7 +2,7 @@
 GO        ?= go
 TAGS      :=
 TESTS     := ./...
-TESTFLAGS := -race
+TESTFLAGS :=
 LDFLAGS   :=
 GOFLAGS   :=
 BINARIES  := dancing-links
@@ -22,7 +22,7 @@ release:
 
 .PHONY: bench
 bench:
-	$(GO) test -v -benchmem -bench=. ./sudoku
+	$(GO) test -v -benchmem -bench=. ./benchmark
 
 .PHONY: unit-test
 unit-test:

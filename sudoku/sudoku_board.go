@@ -1,7 +1,6 @@
 package sudoku
 
 import (
-	"errors"
 	"fmt"
 	"github.com/thomasjungblut/go-dancing-links/dlx"
 	"io"
@@ -11,14 +10,20 @@ import (
 	"strings"
 )
 
+var NoSolutionError = fmt.Errorf("board has no solution")
+
 type SudokuBoardI interface {
 	// dense format used in Euler #96, first line is the header, rest is a 9x9 matrix without spaces and newline row separation
 	ReadEulerTextFormat(gridString string) error
 	// prints the given board row-wise in Go's array format
 	Print(writer io.StringWriter) error
-	// solves the sudoku with DLX internally by filling all zeros, when there are multiple solutions it will just pick the first
-	Solve() error
-	// verifies that the Sudoku is correctly solved
+	// solves the sudoku with DLX by filling all zeros, when there are multiple solutions it
+	// will pick the first and return it as a new board. If there are no solution it will be nil and an NoSolutionError.
+	FindSingleSolution() (SudokuBoardI, error)
+	// solves the sudoku with DLX by filling all zeros, multiple solutions are returned as a slice of new boards
+	// if there are no solution it will be nil and an NoSolutionError.
+	FindAllSolutions() ([]SudokuBoardI, error)
+	// verifies that the Sudoku in this board is correctly solved
 	VerifyCorrectness() error
 }
 
@@ -27,7 +32,20 @@ type SudokuBoard struct {
 	size  int
 }
 
-func (b *SudokuBoard) Solve() error {
+func (b *SudokuBoard) FindSingleSolution() (SudokuBoardI, error) {
+	boards, err := b.FindAllSolutions()
+	if err != nil {
+		return nil, err
+	}
+	if len(boards) > 0 {
+		// pick the first if any
+		return boards[0], nil
+	} else {
+		return nil, NoSolutionError
+	}
+}
+
+func (b *SudokuBoard) FindAllSolutions() ([]SudokuBoardI, error) {
 	squareYSize := int(math.Sqrt(float64(b.size)))
 	squareXSize := b.size / squareYSize
 
@@ -71,14 +89,14 @@ func (b *SudokuBoard) Solve() error {
 					err := mat.AppendRow(fmt.Sprintf("row_%d_%d_%d", row, col, num),
 						b.generateRow(len(mat.Columns()), b.size, squareXSize, squareYSize, row, col, num))
 					if err != nil {
-						return err
+						return nil, err
 					}
 				}
 			} else {
 				err := mat.AppendRow(fmt.Sprintf("row_%d_%d_%d", row, col, b.board[row][col]),
 					b.generateRow(len(mat.Columns()), b.size, squareXSize, squareYSize, row, col, b.board[row][col]))
 				if err != nil {
-					return err
+					return nil, err
 				}
 			}
 		}
@@ -86,32 +104,41 @@ func (b *SudokuBoard) Solve() error {
 
 	solutions := mat.Solve()
 	if len(solutions) == 0 {
-		return errors.New("no solution found")
-	} else if len(solutions) > 1 {
-		solutions = solutions[0:1]
+		return nil, NoSolutionError
 	}
 
+	var resultBoards []SudokuBoardI
 	regex := regexp.MustCompile(`row_(\d)_(\d)_(\d)`)
-	for _, s := range solutions[0] {
-		subMatch := regex.FindStringSubmatch(s)
-		if subMatch != nil {
-			row, err := strconv.Atoi(subMatch[1])
-			if err != nil {
-				return err
-			}
-			col, err := strconv.Atoi(subMatch[2])
-			if err != nil {
-				return err
-			}
-			val, err := strconv.Atoi(subMatch[3])
-			if err != nil {
-				return err
-			}
-			b.board[row][col] = val
+	for _, solution := range solutions {
+		board := make([][]int, b.size, b.size)
+		for i := 0; i < b.size; i++ {
+			board[i] = make([]int, b.size)
+			copy(board[i], b.board[i])
 		}
+		resultBoard := &SudokuBoard{size: b.size, board: board}
+
+		for _, s := range solution {
+			subMatch := regex.FindStringSubmatch(s)
+			if subMatch != nil {
+				row, err := strconv.Atoi(subMatch[1])
+				if err != nil {
+					return nil, err
+				}
+				col, err := strconv.Atoi(subMatch[2])
+				if err != nil {
+					return nil, err
+				}
+				val, err := strconv.Atoi(subMatch[3])
+				if err != nil {
+					return nil, err
+				}
+				resultBoard.board[row][col] = val
+			}
+		}
+		resultBoards = append(resultBoards, resultBoard)
 	}
 
-	return nil
+	return resultBoards, nil
 }
 
 func (b *SudokuBoard) generateRow(numCols, size, squareXSize, squareYSize, x, y, num int) []bool {

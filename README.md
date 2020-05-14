@@ -64,12 +64,17 @@ board.ReadEulerTextFormat(`Grid 01
     002609500
     800203009
     005010300`)
-err := board.solve() // solve with DLX
+board, err := board.FindSingleSolution() // solve with DLX and return the filled board
 err := board.VerifyCorrectness() // check if the solution is correct
 err := board.Print(os.Stdout) // print it to stdout
-```
 
-Keep in mind that this only picks the first solution (if there are many), and returns an error when there is no solution available.
+// or if there are multiple solutions possible, you can find all boards
+boards, err := board.FindAllSolutions() 
+for _, board := range boards {
+	err := board.VerifyCorrectness() // check if the solution is correct
+	err := board.Print(os.Stdout) // print it to stdout
+}
+```
 
 ## N-Queens Solver
 

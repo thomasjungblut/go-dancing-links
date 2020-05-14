@@ -2,10 +2,12 @@ package dlx
 
 import (
 	"fmt"
+	"math"
 )
 
 type DancingLinksMatrix struct {
 	columnCovered     []bool
+	numNodesPerColumn []int
 	columnIdentifiers []string
 	rowIdentifiers    []string
 	columnNodes       []*Node
@@ -39,6 +41,7 @@ func (m *DancingLinksMatrix) AppendColumn(columnIdentifier string) {
 	m.columnIdentifiers = append(m.columnIdentifiers, columnIdentifier)
 	m.columnNodes = append(m.columnNodes, newCol)
 	m.columnCovered = append(m.columnCovered, false)
+	m.numNodesPerColumn = append(m.numNodesPerColumn, 0)
 }
 
 func (m *DancingLinksMatrix) AppendRow(rowIdentifier string, rowValues []bool) error {
@@ -54,6 +57,7 @@ func (m *DancingLinksMatrix) AppendRow(rowIdentifier string, rowValues []bool) e
 		// since this models a sparse matrix, we're only interested in true values
 		if rowValues[i] {
 			colTop := m.columnNodes[i]
+			m.numNodesPerColumn[i]++
 			bottom := colTop.top
 			node := &Node{top: bottom, bottom: colTop, colIndex: i, rowIndex: numRows}
 			bottom.bottom = node
@@ -100,6 +104,7 @@ func (m *DancingLinksMatrix) CoverColumn(columnIndex int) error {
 			node.bottom.top = node.top
 			node.top.bottom = node.bottom
 			node = node.right
+			m.numNodesPerColumn[node.colIndex]--
 		}
 
 		row = row.bottom
@@ -126,6 +131,7 @@ func (m *DancingLinksMatrix) UncoverColumn(columnIndex int) error {
 			node.bottom.top = node
 			node.top.bottom = node
 			node = node.left
+			m.numNodesPerColumn[node.colIndex]++
 		}
 		row = row.top
 	}
@@ -185,7 +191,7 @@ func (m *DancingLinksMatrix) search(partialSolution []string) [][]string {
 		return [][]string{c}
 	} else {
 		result := make([][]string, 0)
-		nextColumn := m.head.right
+		nextColumn := m.chooseNext(m.head.right)
 		_ = m.CoverColumn(nextColumn.colIndex)
 		row := nextColumn.bottom
 		for row != nextColumn {
@@ -220,6 +226,20 @@ func (m *DancingLinksMatrix) search(partialSolution []string) [][]string {
 
 		return result
 	}
+}
+
+func (m *DancingLinksMatrix) chooseNext(node *Node) *Node {
+	lowestCount := math.MaxInt32
+	lowestNode := node
+	for node != m.head {
+		cnt := m.numNodesPerColumn[node.colIndex]
+		if cnt < lowestCount {
+			lowestNode = node
+			lowestCount = cnt
+		}
+		node = node.right
+	}
+	return lowestNode
 }
 
 func NewDancingLinkMatrix() DancingLinksMatrixI {

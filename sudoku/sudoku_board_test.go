@@ -26,7 +26,8 @@ func TestReadingHappyPath(t *testing.T) {
 
 func TestSolvingHappyPath(t *testing.T) {
 	board := firstEulerGrid(t)
-	assert.Nil(t, board.Solve())
+	board, err := board.FindSingleSolution()
+	assert.Nil(t, err)
 	assert.Nil(t, board.VerifyCorrectness())
 	assert.Nil(t, board.Print(os.Stdout))
 }
