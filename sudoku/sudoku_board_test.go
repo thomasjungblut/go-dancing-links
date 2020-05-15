@@ -47,6 +47,11 @@ func TestSudokuCorrectnessFailsRowConstraint(t *testing.T) {
 	assert.EqualError(t, board.VerifyCorrectness(), "error in row 3: unique constraint violated: [5 4 8 1 2 2 9 7 6]")
 }
 
+func TestCheckDuplicates(t *testing.T) {
+	assert.Nil(t, checkForDuplicates([]int{1, 2, 3}, 3))
+	assert.EqualError(t, checkForDuplicates([]int{1, 2, 2}, 3), "unique constraint violated: [1 2 2]")
+}
+
 func firstEulerGrid(t *testing.T) SudokuBoardI {
 	board := NewSudokuBoard(9)
 	assert.Nil(t, board.ReadEulerTextFormat(`Grid 01

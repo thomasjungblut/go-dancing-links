@@ -78,5 +78,30 @@ for _, board := range boards {
 
 ## N-Queens Solver
 
+The generalized N-Queens problem can also be solved fairly easy with DLX:
 
+```go
 
+board := NewNQueensBoard(4)
+result, err := board.FindAllSolutions()
+for _, board := range result {
+    assert.Nil(t, board.VerifyCorrectness())
+    assert.Nil(t, board.Print(os.Stdout))
+    println()
+}
+
+```
+
+which outputs the results as a NxN block where 'x' denotes a queen:
+
+```
+o x o o 
+o o o x 
+x o o o 
+o o x o 
+
+o o x o 
+x o o o 
+o o o x 
+o x o o 
+```

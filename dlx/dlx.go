@@ -3,6 +3,8 @@ package dlx
 type DancingLinksMatrixI interface {
 	// Append a new column with the given name to the matrix
 	AppendColumn(columnIdentifier string)
+	// Append a new secondary column with the given name to the matrix
+	AppendSecondaryColumn(columnIdentifier string)
 	// Append a given dense row to the matrix, error is returned when the number of columns mismatch the registered ones
 	AppendRow(rowIdentifier string, rowValues []bool) error
 	// Returns all column identifiers

@@ -26,16 +26,29 @@ type Node struct {
 }
 
 func (m *DancingLinksMatrix) AppendColumn(columnIdentifier string) {
+	m.appendColumnInternally(columnIdentifier, true)
+}
+
+func (m *DancingLinksMatrix) AppendSecondaryColumn(columnIdentifier string) {
+	m.appendColumnInternally(columnIdentifier, false)
+}
+
+func (m *DancingLinksMatrix) appendColumnInternally(columnIdentifier string, primary bool) {
 	newCol := &Node{colIndex: len(m.columnIdentifiers)}
 	newCol.top = newCol
 	newCol.bottom = newCol
 
-	// insert the new column node in between tail and head
-	tail := m.head.left
-	tail.right = newCol
-	newCol.left = tail
-	newCol.right = m.head
-	m.head.left = newCol
+	if primary {
+		// insert the new column node in between tail and head
+		tail := m.head.left
+		tail.right = newCol
+		newCol.left = tail
+		newCol.right = m.head
+		m.head.left = newCol
+	} else {
+		newCol.left = newCol
+		newCol.right = newCol
+	}
 
 	// make sure we track the column values properly
 	m.columnIdentifiers = append(m.columnIdentifiers, columnIdentifier)

@@ -23,7 +23,7 @@ type SudokuBoardI interface {
 	// solves the sudoku with DLX by filling all zeros, multiple solutions are returned as a slice of new boards
 	// if there are no solution it will be nil and an NoSolutionError.
 	FindAllSolutions() ([]SudokuBoardI, error)
-	// verifies that the Sudoku in this board is correctly solved
+	// verifies that the Sudoku in this board is correctly solved, will return an error otherwise
 	VerifyCorrectness() error
 }
 
@@ -108,7 +108,7 @@ func (b *SudokuBoard) FindAllSolutions() ([]SudokuBoardI, error) {
 	}
 
 	var resultBoards []SudokuBoardI
-	regex := regexp.MustCompile(`row_(\d)_(\d)_(\d)`)
+	regex := regexp.MustCompile(`row_(\d+)_(\d+)_(\d+)`)
 	for _, solution := range solutions {
 		board := make([][]int, b.size, b.size)
 		for i := 0; i < b.size; i++ {

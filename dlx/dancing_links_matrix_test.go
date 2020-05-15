@@ -29,6 +29,19 @@ func TestSparsenessMultiColumn(t *testing.T) {
 	assert.Equal(t, [][]bool{{true, false}, {false, true}}, mat.AsDenseMatrix())
 }
 
+func TestSecondaryConstraints(t *testing.T) {
+	mat := NewDancingLinkMatrix()
+	mat.AppendColumn("1")
+	mat.AppendSecondaryColumn("2")
+	err := mat.AppendRow("A", []bool{true, false})
+	assert.Nil(t, err)
+	err = mat.AppendRow("A", []bool{false, true})
+	assert.Nil(t, err)
+
+	assert.Equal(t, []string{"1", "2"}, mat.Columns())
+	assert.Equal(t, [][]bool{{true, false}, {false, true}}, mat.AsDenseMatrix())
+}
+
 func TestWikipediaExampleDataCorrectnessAsDenseMatrix(t *testing.T) {
 	mat := NewWikipediaExampleMatrix(t)
 	assert.Equal(t, []string{"1", "2", "3", "4", "5", "6", "7"}, mat.Columns())
