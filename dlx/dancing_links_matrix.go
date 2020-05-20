@@ -193,23 +193,34 @@ func (m *DancingLinksMatrix) AsDenseMatrix() [][] bool {
 }
 
 func (m *DancingLinksMatrix) Solve() [][]string {
-	return m.search([]string{})
+	// allocate an empty slice with 100 capacity to avoid enlarging it all the time
+	searchResult := m.search(make([]int, 0, 100))
+	// map the row indices back to their names
+	c := make([][]string, len(searchResult))
+	for i, row := range searchResult {
+		c[i] = make([]string, len(row))
+		for ji, j := range row {
+			c[i][ji] = m.rowIdentifiers[j]
+		}
+	}
+
+	return c
 }
 
-func (m *DancingLinksMatrix) search(partialSolution []string) [][]string {
+func (m *DancingLinksMatrix) search(partialSolution []int) [][]int {
 	if m.head.right == m.head {
 		// we have to copy here to not interfere with other recursion steps changing the partial solution slice
-		c := make([]string, len(partialSolution))
+		c := make([]int, len(partialSolution), len(partialSolution))
 		copy(c, partialSolution)
-		return [][]string{c}
+		return [][]int{c}
 	} else {
-		result := make([][]string, 0)
+		result := make([][]int, 0, 0)
 		nextColumn := m.chooseNext(m.head.right)
 		_ = m.CoverColumn(nextColumn.colIndex)
 		row := nextColumn.bottom
 		for row != nextColumn {
 			// we're adding the next eligible column to the solution
-			partialSolution = append(partialSolution, m.rowIdentifiers[row.rowIndex])
+			partialSolution = append(partialSolution, row.rowIndex)
 			node := row.right
 			// all other columns that are true in that row now need to be covered too
 			for node != row {
@@ -224,7 +235,7 @@ func (m *DancingLinksMatrix) search(partialSolution []string) [][]string {
 				}
 			}
 
-			// now revert the covering for the next column iteration
+			// revert the last covering for the next column iteration
 			partialSolution = partialSolution[:len(partialSolution)-1]
 			node = row.left
 			// all other columns that are true in that row now need to be covered too

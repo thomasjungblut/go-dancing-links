@@ -16,6 +16,8 @@ type NQueensBoardI interface {
 	VerifyCorrectness() error
 	// solves the n-queens problem with DLX and returns all of the solutions or an error.
 	FindAllSolutions() ([]NQueensBoardI, error)
+	// solves the n-queens problem with DLX and returns the count of the solutions
+	CountAllSolutions() (int, error)
 }
 
 type NQueensBoard struct {
@@ -114,7 +116,7 @@ func (b *NQueensBoard) VerifyCorrectness() error {
 	return nil
 }
 
-func (b *NQueensBoard) FindAllSolutions() ([]NQueensBoardI, error) {
+func (b *NQueensBoard) solve() [][]string {
 	mat := dlx.NewDancingLinkMatrix()
 
 	// add the row and col constraints
@@ -150,15 +152,19 @@ func (b *NQueensBoard) FindAllSolutions() ([]NQueensBoardI, error) {
 			constraint[2*b.n+r+c] = true
 			constraint[(4*b.n-1)+(b.n-r+c-1)] = true
 
-			err := mat.AppendRow(fmt.Sprintf("queen_%d_%d", r, c), constraint)
-			if err != nil {
-				return nil, err
-			}
+			_ = mat.AppendRow(fmt.Sprintf("queen_%d_%d", r, c), constraint)
 		}
 	}
 
-	solutions := mat.Solve()
+	return mat.Solve()
+}
 
+func (b *NQueensBoard) CountAllSolutions() (int, error) {
+	return len(b.solve()), nil
+}
+
+func (b *NQueensBoard) FindAllSolutions() ([]NQueensBoardI, error) {
+	solutions := b.solve()
 	var resultBoards []NQueensBoardI
 	regex := regexp.MustCompile(`queen_(\d+)_(\d+)`)
 	for _, solution := range solutions {
