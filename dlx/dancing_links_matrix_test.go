@@ -191,14 +191,10 @@ func NewReadMeExample() DancingLinksMatrixI {
 	mat.AppendColumn("beer")
 	mat.AppendColumn("nachos")
 	mat.AppendColumn("sour cream")
-	_ = mat.AppendRow("Jack", []bool{true, false, false})
-	// Jack can bring beer only
-	_ = mat.AppendRow("Amanda", []bool{true, true, false})
-	// Amanda can bring beer and nachos
-	_ = mat.AppendRow("Chris", []bool{false, false, true})
-	// Chris can only bring sour cream
-	_ = mat.AppendRow("Jen", []bool{true, true, true})
-	// Jen can bring everything
+	_ = mat.AppendRow("Jack", []bool{true, false, false})  // Jack can bring beer only
+	_ = mat.AppendRow("Amanda", []bool{true, true, false}) // Amanda can bring beer and nachos
+	_ = mat.AppendRow("Chris", []bool{false, false, true}) // Chris can only bring sour cream
+	_ = mat.AppendRow("Jen", []bool{true, true, true})     // Jen can bring everything
 	return mat
 }
 
