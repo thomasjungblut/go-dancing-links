@@ -33,19 +33,73 @@ type SudokuBoard struct {
 }
 
 func (b *SudokuBoard) FindSingleSolution() (SudokuBoardI, error) {
-	boards, err := b.FindAllSolutions()
+	mat, err := b.createDancingLinksMatrix()
 	if err != nil {
 		return nil, err
 	}
-	if len(boards) > 0 {
-		// pick the first if any
-		return boards[0], nil
-	} else {
+
+	solution := mat.SolveOne()
+	if solution == nil {
 		return nil, NoSolutionError
 	}
+
+	mapped, err := b.mapSolutionsToBoards([][]string{solution})
+	if err != nil {
+		return nil, err
+	}
+	return mapped[0], nil
 }
 
 func (b *SudokuBoard) FindAllSolutions() ([]SudokuBoardI, error) {
+	mat, err := b.createDancingLinksMatrix()
+	if err != nil {
+		return nil, err
+	}
+
+	solutions := mat.Solve()
+	if len(solutions) == 0 {
+		return nil, NoSolutionError
+	}
+
+	return b.mapSolutionsToBoards(solutions)
+}
+
+func (b *SudokuBoard) mapSolutionsToBoards(solutions [][]string) ([]SudokuBoardI, error) {
+	var resultBoards []SudokuBoardI
+	regex := regexp.MustCompile(`row_(\d+)_(\d+)_(\d+)`)
+	for _, solution := range solutions {
+		board := make([][]int, b.size, b.size)
+		for i := 0; i < b.size; i++ {
+			board[i] = make([]int, b.size)
+			copy(board[i], b.board[i])
+		}
+		resultBoard := &SudokuBoard{size: b.size, board: board}
+
+		for _, s := range solution {
+			subMatch := regex.FindStringSubmatch(s)
+			if subMatch != nil {
+				row, err := strconv.Atoi(subMatch[1])
+				if err != nil {
+					return nil, err
+				}
+				col, err := strconv.Atoi(subMatch[2])
+				if err != nil {
+					return nil, err
+				}
+				val, err := strconv.Atoi(subMatch[3])
+				if err != nil {
+					return nil, err
+				}
+				resultBoard.board[row][col] = val
+			}
+		}
+		resultBoards = append(resultBoards, resultBoard)
+	}
+
+	return resultBoards, nil
+}
+
+func (b *SudokuBoard) createDancingLinksMatrix() (dlx.DancingLinksMatrixI, error) {
 	squareYSize := int(math.Sqrt(float64(b.size)))
 	squareXSize := b.size / squareYSize
 
@@ -102,43 +156,7 @@ func (b *SudokuBoard) FindAllSolutions() ([]SudokuBoardI, error) {
 		}
 	}
 
-	solutions := mat.Solve()
-	if len(solutions) == 0 {
-		return nil, NoSolutionError
-	}
-
-	var resultBoards []SudokuBoardI
-	regex := regexp.MustCompile(`row_(\d+)_(\d+)_(\d+)`)
-	for _, solution := range solutions {
-		board := make([][]int, b.size, b.size)
-		for i := 0; i < b.size; i++ {
-			board[i] = make([]int, b.size)
-			copy(board[i], b.board[i])
-		}
-		resultBoard := &SudokuBoard{size: b.size, board: board}
-
-		for _, s := range solution {
-			subMatch := regex.FindStringSubmatch(s)
-			if subMatch != nil {
-				row, err := strconv.Atoi(subMatch[1])
-				if err != nil {
-					return nil, err
-				}
-				col, err := strconv.Atoi(subMatch[2])
-				if err != nil {
-					return nil, err
-				}
-				val, err := strconv.Atoi(subMatch[3])
-				if err != nil {
-					return nil, err
-				}
-				resultBoard.board[row][col] = val
-			}
-		}
-		resultBoards = append(resultBoards, resultBoard)
-	}
-
-	return resultBoards, nil
+	return mat, nil
 }
 
 func (b *SudokuBoard) generateRow(numCols, size, squareXSize, squareYSize, x, y, num int) []bool {

@@ -18,19 +18,36 @@ type NQueensBoardI interface {
 	FindAllSolutions() ([]NQueensBoardI, error)
 	// solves the n-queens problem with DLX and returns the count of the solutions
 	CountAllSolutions() (int, error)
+	// returns the given board as a dense two dimensional array, where true denotes a placed queen
+	AsTwoDimArray() [][]bool
+}
+
+type placementCoordinate struct {
+	row, col int
 }
 
 type NQueensBoard struct {
-	// TODO(thomas): we can use a sparse map representation instead, that's pretty expensive for big boards and many solutions
-	board [][]bool
-	n     int
+	placements map[placementCoordinate]bool
+	n          int
+}
+
+func (b *NQueensBoard) AsTwoDimArray() [][]bool {
+	board := make([][]bool, b.n, b.n)
+	for i := 0; i < b.n; i++ {
+		board[i] = make([]bool, b.n)
+	}
+	for p := range b.placements {
+		board[p.row][p.col] = true
+	}
+
+	return board
 }
 
 func (b *NQueensBoard) Print(writer io.StringWriter) error {
-	for _, row := range b.board {
-		for _, col := range row {
+	for row := 0; row < b.n; row++ {
+		for col := 0; col < b.n; col++ {
 			c := "o "
-			if col {
+			if b.placements[placementCoordinate{row: row, col: col}] {
 				c = "x "
 			}
 			_, err := writer.WriteString(c)
@@ -48,13 +65,16 @@ func (b *NQueensBoard) Print(writer io.StringWriter) error {
 }
 
 func (b *NQueensBoard) VerifyCorrectness() error {
+	// this is quite inefficient for larger board sizes, but is not on the critical path anywhere I hope
 	// check board sizes first
-	expectedLen := len(b.board)
+	expectedLen := len(b.placements)
 	if expectedLen != b.n {
-		return errors.New(fmt.Sprintf("unexpected length: array is %d, but defined length is %d", expectedLen, b.n))
+		return errors.New(fmt.Sprintf("unexpected number of queens: size is %d, but defined length is %d", expectedLen, b.n))
 	}
 
-	for i, row := range b.board {
+	board := b.AsTwoDimArray()
+
+	for i, row := range board {
 		if expectedLen != len(row) {
 			return errors.New(fmt.Sprintf("unexpected row length: in %dth array is %d, but defined length is %d", i, len(row), b.n))
 		}
@@ -64,18 +84,18 @@ func (b *NQueensBoard) VerifyCorrectness() error {
 	queenCount := 0
 	for r := 0; r < b.n; r++ {
 		for c := 0; c < b.n; c++ {
-			if b.board[r][c] {
+			if board[r][c] {
 				queenCount++
 				// scan the col
 				for rx := 0; rx < b.n; rx++ {
-					if rx != r && b.board[rx][c] {
+					if rx != r && board[rx][c] {
 						return errors.New(fmt.Sprintf("found col conflict at %d/%d with %d/%d", r, c, rx, c))
 					}
 				}
 
 				// scan the row
 				for cx := 0; cx < b.n; cx++ {
-					if cx != c && b.board[r][cx] {
+					if cx != c && board[r][cx] {
 						return errors.New(fmt.Sprintf("found row conflict at %d/%d with %d/%d", r, c, r, cx))
 					}
 				}
@@ -87,7 +107,7 @@ func (b *NQueensBoard) VerifyCorrectness() error {
 				rx := r
 				cx := c
 				for rx < b.n && cx >= 0 {
-					if cx != c && rx != r && b.board[rx][cx] {
+					if cx != c && rx != r && board[rx][cx] {
 						return errors.New(fmt.Sprintf("found diagonal conflict at %d/%d with %d/%d", r, c, rx, cx))
 					}
 					rx++
@@ -98,7 +118,7 @@ func (b *NQueensBoard) VerifyCorrectness() error {
 				rx = r
 				cx = c
 				for rx < b.n && cx < b.n {
-					if cx != c && rx != r && b.board[rx][cx] {
+					if cx != c && rx != r && board[rx][cx] {
 						return errors.New(fmt.Sprintf("found diagonal conflict at %d/%d with %d/%d", r, c, rx, cx))
 					}
 					rx++
@@ -171,13 +191,7 @@ func (b *NQueensBoard) FindAllSolutions() ([]NQueensBoardI, error) {
 		if len(solution) != b.n {
 			return nil, errors.New(fmt.Sprintf("didn't expect %d queens on an %d board", len(solution), b.n))
 		}
-		board := make([][]bool, b.n, b.n)
-		for i := 0; i < b.n; i++ {
-			board[i] = make([]bool, b.n)
-			copy(board[i], b.board[i])
-		}
-		resultBoard := &NQueensBoard{n: b.n, board: board}
-
+		resultBoard := &NQueensBoard{n: b.n, placements: map[placementCoordinate]bool{}}
 		for _, s := range solution {
 			subMatch := regex.FindStringSubmatch(s)
 			if subMatch != nil {
@@ -189,7 +203,7 @@ func (b *NQueensBoard) FindAllSolutions() ([]NQueensBoardI, error) {
 				if err != nil {
 					return nil, err
 				}
-				resultBoard.board[row][col] = true
+				resultBoard.placements[placementCoordinate{row: row, col: col}] = true
 			}
 		}
 		resultBoards = append(resultBoards, resultBoard)
@@ -199,13 +213,18 @@ func (b *NQueensBoard) FindAllSolutions() ([]NQueensBoardI, error) {
 }
 
 func NewNQueensBoard(n int) NQueensBoardI {
-	board := make([][]bool, n, n)
-	for i := 0; i < n; i++ {
-		board[i] = make([]bool, n)
-	}
-	return &NQueensBoard{n: n, board: board}
+	return &NQueensBoard{n: n, placements: map[placementCoordinate]bool{}}
 }
 
 func newTestingNQueensBoard(a [][]bool) NQueensBoardI {
-	return &NQueensBoard{n: len(a), board: a}
+	placements := map[placementCoordinate]bool{}
+	for r := 0; r < len(a); r++ {
+		for c := 0; c < len(a[r]); c++ {
+			if a[r][c] {
+				placements[placementCoordinate{row: r, col: c}] = true
+			}
+		}
+	}
+
+	return &NQueensBoard{n: len(a), placements: placements}
 }

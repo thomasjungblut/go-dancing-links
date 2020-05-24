@@ -58,14 +58,6 @@ func TestVerifyHappyPath(t *testing.T) {
 	assert.Nil(t, board.VerifyCorrectness())
 }
 
-func TestVerifyWrongSizesFails(t *testing.T) {
-	board := newTestingNQueensBoard([][]bool{
-		{true},
-		{true, false},
-	})
-	assert.EqualError(t, board.VerifyCorrectness(), "unexpected row length: in 0th array is 1, but defined length is 2")
-}
-
 func TestVerifyWrongResultFailsDiagonal(t *testing.T) {
 	board := newTestingNQueensBoard([][]bool{
 		{true, false},
@@ -87,7 +79,7 @@ func TestVerifyWrongResultFailsRow(t *testing.T) {
 		{true, true},
 		{false, true},
 	})
-	assert.EqualError(t, board.VerifyCorrectness(), "found row conflict at 0/0 with 0/1")
+	assert.EqualError(t, board.VerifyCorrectness(), "unexpected number of queens: size is 3, but defined length is 2")
 }
 
 func TestVerifyWrongResultFailsColumn(t *testing.T) {
@@ -103,5 +95,5 @@ func TestVerifyWrongResultFailsWrongQueenCount(t *testing.T) {
 		{true, false},
 		{false, false},
 	})
-	assert.EqualError(t, board.VerifyCorrectness(), "unexpected number of queens: found 1, but defined length is 2")
+	assert.EqualError(t, board.VerifyCorrectness(), "unexpected number of queens: size is 1, but defined length is 2")
 }

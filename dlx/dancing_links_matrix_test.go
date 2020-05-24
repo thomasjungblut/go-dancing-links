@@ -170,21 +170,36 @@ func TestSolvingMultiSolutionExample(t *testing.T) {
 }
 
 func TestReadMeExample(t *testing.T) {
-	mat := NewDancingLinkMatrix()
-
-	mat.AppendColumn("beer")
-	mat.AppendColumn("nachos")
-	mat.AppendColumn("sour cream")
-
-	_ = mat.AppendRow("Jack", []bool{true, false, false})  // Jack can bring beer only
-	_ = mat.AppendRow("Amanda", []bool{true, true, false}) // Amanda can bring beer and nachos
-	_ = mat.AppendRow("Chris", []bool{false, false, true}) // Chris can only bring sour cream
-	_ = mat.AppendRow("Jen", []bool{true, true, true})     // Jen can bring everything
+	mat := NewReadMeExample()
 
 	result := mat.Solve()
 	assert.Equal(t, 2, len(result))
 	assert.ElementsMatch(t, []string{"Amanda", "Chris"}, result[0])
 	assert.ElementsMatch(t, []string{"Jen"}, result[1])
+}
+
+func TestReadMeExampleSingleResultSolution(t *testing.T) {
+	mat := NewReadMeExample()
+
+	result := mat.SolveOne()
+	assert.Equal(t, 2, len(result))
+	assert.ElementsMatch(t, []string{"Amanda", "Chris"}, result)
+}
+
+func NewReadMeExample() DancingLinksMatrixI {
+	mat := NewDancingLinkMatrix()
+	mat.AppendColumn("beer")
+	mat.AppendColumn("nachos")
+	mat.AppendColumn("sour cream")
+	_ = mat.AppendRow("Jack", []bool{true, false, false})
+	// Jack can bring beer only
+	_ = mat.AppendRow("Amanda", []bool{true, true, false})
+	// Amanda can bring beer and nachos
+	_ = mat.AppendRow("Chris", []bool{false, false, true})
+	// Chris can only bring sour cream
+	_ = mat.AppendRow("Jen", []bool{true, true, true})
+	// Jen can bring everything
+	return mat
 }
 
 func NewWikipediaExampleMatrix(t *testing.T) DancingLinksMatrixI {

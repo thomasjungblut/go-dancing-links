@@ -26,5 +26,11 @@ type DancingLinksMatrixI interface {
 	// Solves this matrix, returns the results as a list, of which each element is a set of rows that covers all the columns.
 	// the first dimension would contain the number of solutions.
 	// the second dimension contains the identifier of the rows that participate in this solution.
+	// If no solution was found, the result is nil.
 	Solve() [][]string
+
+	// Solves this matrix, returns the first eligible result that was found.
+	// The resulting slice contains the identifier of the rows that participate in this solution.
+	// If no solution was found, the result is nil.
+	SolveOne() []string
 }

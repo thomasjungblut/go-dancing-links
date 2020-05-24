@@ -2,7 +2,6 @@ package sudoku
 
 import (
 	"github.com/stretchr/testify/assert"
-	"os"
 	"strings"
 	"testing"
 )
@@ -29,7 +28,6 @@ func TestSolvingHappyPath(t *testing.T) {
 	board, err := board.FindSingleSolution()
 	assert.Nil(t, err)
 	assert.Nil(t, board.VerifyCorrectness())
-	assert.Nil(t, board.Print(os.Stdout))
 }
 
 func TestSudokuCorrectnessFailsRowConstraint(t *testing.T) {
@@ -50,6 +48,49 @@ func TestSudokuCorrectnessFailsRowConstraint(t *testing.T) {
 func TestCheckDuplicates(t *testing.T) {
 	assert.Nil(t, checkForDuplicates([]int{1, 2, 3}, 3))
 	assert.EqualError(t, checkForDuplicates([]int{1, 2, 2}, 3), "unique constraint violated: [1 2 2]")
+}
+
+func TestMultiSolutionSudoku(t *testing.T) {
+	board := multiSolutionGrid(t)
+	boards, err := board.FindAllSolutions()
+	assert.Nil(t, err)
+	assert.Equal(t, 2, len(boards))
+
+	for _, b := range boards {
+		assert.Nil(t, b.VerifyCorrectness())
+	}
+}
+
+func TestNoSolutionSudoku(t *testing.T) {
+	board := NewSudokuBoard(9)
+	assert.Nil(t, board.ReadEulerTextFormat(`Grid 0
+516849732
+307605000
+809700065
+135060907
+472591006
+968370050
+253186074
+684207500
+791050608`))
+
+	_, err := board.FindAllSolutions()
+	assert.Equal(t, NoSolutionError, err)
+}
+
+func multiSolutionGrid(t *testing.T) SudokuBoardI {
+	board := NewSudokuBoard(9)
+	assert.Nil(t, board.ReadEulerTextFormat(`Grid 00
+906070403
+000400200
+070023010
+500000100
+040208060
+003000005
+030700050
+007005000
+405010708`))
+	return board
 }
 
 func firstEulerGrid(t *testing.T) SudokuBoardI {

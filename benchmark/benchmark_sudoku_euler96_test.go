@@ -5,11 +5,29 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/thomasjungblut/go-dancing-links/sudoku"
 	"io/ioutil"
+	"os"
 	"strings"
 	"sync"
 	"testing"
 	"time"
 )
+
+func BenchmarkSolvingLongestTakingEulerPuzzle(t *testing.B) {
+	eulerBoards, err := readAllEulerBoards()
+	assert.Nil(t, err)
+
+	// only run the one board that takes so long
+	theBoard := eulerBoards[46]
+	for i := 0; i < t.N; i++ {
+		start := time.Now()
+		board, err := theBoard.FindSingleSolution()
+		assert.Nil(t, err)
+		elapsed := time.Since(start)
+		fmt.Println(fmt.Sprintf("solving the board took %s", elapsed))
+		assert.Nil(t, board.VerifyCorrectness())
+		_ = board.Print(os.Stdout)
+	}
+}
 
 func BenchmarkSolvingAllEulerPuzzlesHappyPath(t *testing.B) {
 	eulerBoards, err := readAllEulerBoards()
@@ -22,13 +40,11 @@ func BenchmarkSolvingAllEulerPuzzlesHappyPath(t *testing.B) {
 		go func(i int, boardI sudoku.SudokuBoardI) {
 			defer wg.Done()
 			start := time.Now()
-			boardResults, err := boardI.FindAllSolutions()
+			boardResult, err := boardI.FindSingleSolution()
 			elapsed := time.Since(start)
 			assert.Nil(t, err)
-			fmt.Println(fmt.Sprintf("board %d has %d solution(s), took %s", i, len(boardResults), elapsed))
-			for _, board := range boardResults {
-				assert.Nil(t, board.VerifyCorrectness())
-			}
+			fmt.Println(fmt.Sprintf("solving board %d took %s", i, elapsed))
+			assert.Nil(t, boardResult.VerifyCorrectness())
 		}(i, eulerBoards[i])
 	}
 

@@ -194,8 +194,15 @@ func (m *DancingLinksMatrix) AsDenseMatrix() [][] bool {
 
 func (m *DancingLinksMatrix) Solve() [][]string {
 	// allocate an empty slice with 100 capacity to avoid enlarging it all the time
-	searchResult := m.search(make([]int, 0, 100))
+	searchResult := m.search(make([]int, 0, 100), math.MaxInt32)
+	if len(searchResult) == 0 {
+		return nil
+	}
 	// map the row indices back to their names
+	return m.mapRowNames(searchResult)
+}
+
+func (m *DancingLinksMatrix) mapRowNames(searchResult [][]int) [][]string {
 	c := make([][]string, len(searchResult))
 	for i, row := range searchResult {
 		c[i] = make([]string, len(row))
@@ -203,11 +210,21 @@ func (m *DancingLinksMatrix) Solve() [][]string {
 			c[i][ji] = m.rowIdentifiers[j]
 		}
 	}
-
 	return c
 }
 
-func (m *DancingLinksMatrix) search(partialSolution []int) [][]int {
+func (m *DancingLinksMatrix) SolveOne() []string {
+	searchResult := m.search(make([]int, 0, 100), 1)
+	if len(searchResult) == 0 {
+		return nil
+	}
+	return m.mapRowNames(searchResult)[0]
+}
+
+func (m *DancingLinksMatrix) search(partialSolution []int, maxRemainingResults int) [][]int {
+	if maxRemainingResults <= 0 {
+		return nil
+	}
 	if m.head.right == m.head {
 		// we have to copy here to not interfere with other recursion steps changing the partial solution slice
 		c := make([]int, len(partialSolution), len(partialSolution))
@@ -219,6 +236,10 @@ func (m *DancingLinksMatrix) search(partialSolution []int) [][]int {
 		_ = m.CoverColumn(nextColumn.colIndex)
 		row := nextColumn.bottom
 		for row != nextColumn {
+			if len(result) >= maxRemainingResults {
+				break
+			}
+
 			// we're adding the next eligible column to the solution
 			partialSolution = append(partialSolution, row.rowIndex)
 			node := row.right
@@ -229,9 +250,12 @@ func (m *DancingLinksMatrix) search(partialSolution []int) [][]int {
 			}
 
 			// recurse and gather any sub-solutions
-			for _, recResult := range m.search(partialSolution) {
-				if len(recResult) > 0 {
+			for _, recResult := range m.search(partialSolution, maxRemainingResults-len(result)) {
+				if recResult != nil && len(recResult) > 0 {
 					result = append(result, recResult)
+					if len(result) >= maxRemainingResults {
+						break
+					}
 				}
 			}
 
@@ -247,6 +271,10 @@ func (m *DancingLinksMatrix) search(partialSolution []int) [][]int {
 			row = row.bottom
 		}
 		_ = m.UncoverColumn(nextColumn.colIndex)
+
+		if len(result) > maxRemainingResults {
+			result = result[:maxRemainingResults]
+		}
 
 		return result
 	}
