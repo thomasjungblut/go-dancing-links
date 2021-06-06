@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/thomasjungblut/go-dancing-links.svg?branch=master)](https://travis-ci.org/thomasjungblut/go-dancing-links)
+[![Go](https://github.com/thomasjungblut/go-dancing-links/actions/workflows/go.yml/badge.svg)](https://github.com/thomasjungblut/go-dancing-links/actions/workflows/go.yml)
 
 ## go-dancing-links
 
